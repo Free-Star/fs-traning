@@ -33,7 +33,7 @@ const pastFourWeeksData = computed(() => {
     }, 0)
     
     // 计算这周的名称（例如：3月1日-3月7日）
-    const weekLabel = `${(weekStart.getMonth() + 1)}月${weekStart.getDate()}日-${(weekEnd.getMonth() + 1)}月${weekEnd.getDate()}日`
+    const weekLabel = `${(weekStart.getMonth() + 1)}月${weekStart.getDate()}日~`
     
     data.unshift({
       label: weekLabel,
@@ -68,7 +68,7 @@ const pastSixMonthsData = computed(() => {
     }, 0)
     
     // 月份名称
-    const monthLabel = `${monthStart.getFullYear()}年${monthStart.getMonth() + 1}月`
+    const monthLabel = `${monthStart.getMonth() + 1}月`
     
     data.unshift({
       label: monthLabel,

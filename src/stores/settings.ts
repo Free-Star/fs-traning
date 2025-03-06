@@ -23,34 +23,60 @@ export const useSettingsStore = defineStore('settings', () => {
     try {
       console.log('尝试播放声音:', type);
       
-      // 声音文件URL
-      let soundUrl = '';
-      switch (type) {
-        case 'exercise-start':
-          soundUrl = new URL('/sounds/exercise-start.mp3', import.meta.url).href;
-          break;
-        case 'exercise-end':
-          soundUrl = new URL('/sounds/exercise-end.mp3', import.meta.url).href;
-          break;
-        case 'rest-end':
-          soundUrl = new URL('/sounds/rest-end.mp3', import.meta.url).href;
-          break;
-      }
+      // 定义所有可能的音频文件路径格式
+      // 注意: Vite开发服务器下，应当使用 '/sounds/xxx.mp3'，但部署后可能需要其他路径
+      const soundPaths = [
+        `/sounds/${type}.mp3`,                  // 标准路径
+        `./sounds/${type}.mp3`,                 // 相对路径
+        `../public/sounds/${type}.mp3`,         // 开发环境路径
+        `${window.location.origin}/sounds/${type}.mp3` // 绝对路径
+      ];
       
-      // 创建一个临时的Audio对象
-      const audio = new Audio(soundUrl);
+      // 尝试所有可能的路径
+      let audioLoaded = false;
       
-      // 当声音加载完成时播放
+      // 创建一个新的Audio对象
+      const audio = new Audio();
+      
+      // 监听音频加载错误
+      audio.onerror = (e) => {
+        const currentPath = audio.src;
+        console.error(`音频加载失败 (${currentPath}):`, e);
+        
+        // 如果有更多路径可尝试，则尝试下一个
+        const currentIndex = soundPaths.findIndex(path => path === currentPath.replace(window.location.origin, ''));
+        if (currentIndex >= 0 && currentIndex < soundPaths.length - 1) {
+          console.log(`尝试下一个路径: ${soundPaths[currentIndex + 1]}`);
+          audio.src = soundPaths[currentIndex + 1];
+        } else {
+          console.error('所有路径都已尝试，无法加载音频');
+          
+        }
+      };
+      
+      // 当音频可以播放时
       audio.oncanplaythrough = () => {
-        audio.play().catch(error => {
-          console.error('播放声音失败:', error);
-        });
+        console.log('音频已加载，准备播放:', audio.src);
+        audioLoaded = true;
+        
+        try {
+          const playPromise = audio.play();
+          if (playPromise !== undefined) {
+            playPromise
+              .then(() => console.log('音频播放成功'))
+              .catch(e => console.error('音频播放失败:', e));
+          }
+        } catch (e) {
+          console.error('播放音频时出错:', e);
+        }
       };
       
-      // 处理加载错误
-      audio.onerror = (error) => {
-        console.error('加载声音文件失败:', error);
-      };
+      // 设置第一个路径开始尝试
+      audio.src = soundPaths[0];
+      console.log('尝试第一个路径:', soundPaths[0]);
+      
+      // 确保音频有足够的音量
+      audio.volume = 1.0;
     } catch (error) {
       console.error('播放声音时出错:', error);
     }

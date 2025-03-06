@@ -1,35 +1,30 @@
 <script setup lang="ts">
-import { ref, reactive, computed } from 'vue'
+import { ref, onMounted, computed } from 'vue'
+import { useRouter } from 'vue-router'
 import { useWorkoutStore } from '../stores/workout'
 import type { WorkoutType, Exercise } from '../stores/workout'
 import { showToast } from '@nutui/nutui'
 
-const workoutStore = useWorkoutStore()
-
-const props = defineProps({
-  editMode: {
-    type: Boolean,
-    default: false
-  },
-  planId: {
-    type: String,
-    default: ''
-  }
-})
+const props = defineProps<{
+  editMode?: boolean;
+  planId?: string;
+}>()
 
 const emit = defineEmits(['saved', 'canceled'])
+const router = useRouter()
+const workoutStore = useWorkoutStore()
 
 const workoutTypes: WorkoutType[] = ['推', '拉', '腿', '胸', '背', '肩', '手臂']
 
 // 表单数据
-const formData = reactive({
+const formData = ref({
   name: '',
   type: workoutTypes[0],
   exercises: [] as Exercise[]
 })
 
 // 新动作表单
-const newExercise = reactive({
+const newExercise = ref({
   name: '',
   sets: 3,
   timePerSet: 40,
@@ -37,43 +32,55 @@ const newExercise = reactive({
 })
 
 // 编辑模式加载数据
-if (props.editMode && props.planId) {
-  const plan = workoutStore.workoutPlans.find(p => p.id === props.planId)
-  if (plan) {
-    formData.name = plan.name
-    formData.type = plan.type
-    formData.exercises = [...plan.exercises]
+onMounted(() => {
+  if (props.editMode && props.planId) {
+    const plan = workoutStore.getWorkoutPlanById(props.planId)
+    if (plan) {
+      formData.value = {
+        name: plan.name,
+        type: plan.type,
+        exercises: [...plan.exercises]
+      }
+    } else {
+      showToast.fail('加载训练计划失败')
+      router.push('/')
+    }
   }
-}
+})
 
 // 添加新动作
 function addExercise() {
-  if (!newExercise.name.trim()) {
+  if (!newExercise.value.name.trim()) {
     showToast.text('请输入动作名称')
     return
   }
   
-  formData.exercises.push({
+  formData.value.exercises.push({
     id: Date.now().toString(),
-    name: newExercise.name,
-    sets: newExercise.sets,
-    timePerSet: newExercise.timePerSet,
-    restBetweenSets: newExercise.restBetweenSets
+    name: newExercise.value.name,
+    sets: newExercise.value.sets,
+    timePerSet: newExercise.value.timePerSet,
+    restBetweenSets: newExercise.value.restBetweenSets
   })
   
   // 重置表单
-  newExercise.name = ''
+  newExercise.value = {
+    name: '',
+    sets: 3,
+    timePerSet: 40,
+    restBetweenSets: 30
+  }
   showToast.success('已添加新动作')
 }
 
 // 删除动作
 function removeExercise(index: number) {
-  formData.exercises.splice(index, 1)
+  formData.value.exercises.splice(index, 1)
 }
 
 // 计算总训练时间
 const totalTime = computed(() => {
-  return formData.exercises.reduce((total, exercise) => {
+  return formData.value.exercises.reduce((total, exercise) => {
     const exerciseTime = exercise.sets * exercise.timePerSet
     const restTime = (exercise.sets - 1) * exercise.restBetweenSets
     return total + exerciseTime + restTime
@@ -100,42 +107,55 @@ const formattedTotalTime = computed(() => {
 
 // 保存计划
 function savePlan() {
-  if (!formData.name.trim()) {
+  if (!formData.value.name.trim()) {
     showToast.text('请输入计划名称')
     return
   }
   
-  if (formData.exercises.length === 0) {
+  if (formData.value.exercises.length === 0) {
     showToast.text('请至少添加一个训练动作')
     return
   }
   
-  if (props.editMode && props.planId) {
-    workoutStore.updateWorkoutPlan(props.planId, {
-      name: formData.name,
-      type: formData.type,
-      exercises: formData.exercises
-    })
-    showToast.success('计划已更新')
-  } else {
-    workoutStore.addWorkoutPlan({
-      name: formData.name,
-      type: formData.type,
-      exercises: formData.exercises
-    })
-    showToast.success('计划已创建')
+  try {
+    if (props.editMode && props.planId) {
+      workoutStore.updateWorkoutPlan(props.planId, {
+        name: formData.value.name,
+        type: formData.value.type,
+        exercises: formData.value.exercises
+      })
+      showToast.success('计划已更新')
+    } else {
+      workoutStore.addWorkoutPlan({
+        name: formData.value.name,
+        type: formData.value.type,
+        exercises: formData.value.exercises
+      })
+      showToast.success('计划已创建')
+    }
+    
+    // 返回首页
+    router.push('/')
+  } catch (error) {
+    showToast.fail(`保存失败: ${error}`)
   }
   
   emit('saved')
 }
 
 function cancel() {
+  router.push('/')
   emit('canceled')
 }
+
+// 标题
+const formTitle = computed(() => props.editMode ? '编辑训练计划' : '创建新训练计划')
 </script>
 
 <template>
   <div class="workout-plan-form">
+    <h2 class="form-title">{{ formTitle }}</h2>
+    
     <nut-cell-group title="基本信息">
       <nut-cell title="计划名称">
         <input
@@ -298,5 +318,11 @@ function cancel() {
 
 .mb-4 {
   margin-bottom: 16px;
+}
+
+.form-title {
+  font-size: 20px;
+  margin-bottom: 20px;
+  text-align: center;
 }
 </style> 

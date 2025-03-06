@@ -8,7 +8,7 @@ const settingsStore = useSettingsStore()
 
 // 计时器动画参考元素
 const progressCircleRef = ref(null)
-let progressAnimation = null
+let progressAnimation: any = null
 
 const formattedTime = computed(() => {
   const minutes = Math.floor(timerStore.timeRemaining / 60)
@@ -77,8 +77,23 @@ watch(() => timerStore.timeRemaining, (newTime) => {
 // 清理操作
 onUnmounted(() => {
   if (progressAnimation) {
-    progressAnimation.cancel()
+    progressAnimation?.cancel?.()
   }
+})
+
+// 计算每个动作的完成状态
+const exerciseStatuses = computed(() => {
+  if (!timerStore.currentWorkout) return []
+  
+  return timerStore.currentWorkout.exercises.map((_, index) => {
+    if (index < timerStore.currentExerciseIndex) {
+      return 'completed' // 已完成的动作
+    } else if (index === timerStore.currentExerciseIndex) {
+      return 'current' // 当前动作
+    } else {
+      return 'upcoming' // 未来的动作
+    }
+  })
 })
 </script>
 
@@ -92,15 +107,32 @@ onUnmounted(() => {
     <!-- 圆形进度条和计时器 -->
     <div class="progress-circle-container">
       <div class="progress-circle" ref="progressCircleRef" :style="{ borderColor: statusColor }">
+        <svg class="progress-svg" viewBox="0 0 100 100">
+          <circle
+            class="progress-track"
+            cx="50"
+            cy="50"
+            r="46"
+            fill="transparent"
+            stroke="#e0e0e0"
+            stroke-width="8"
+          />
+          <circle
+            class="progress-indicator"
+            cx="50"
+            cy="50"
+            r="46"
+            fill="transparent"
+            :stroke="statusColor"
+            stroke-width="8"
+            stroke-dasharray="289.02652413026095"
+            :stroke-dashoffset="289.02652413026095 * (progressPercentage / 100)"
+            transform="rotate(-90, 50, 50)"
+          />
+        </svg>
         <div class="time-display">{{ formattedTime }}</div>
         <div class="status-text" :style="{ color: statusColor }">{{ statusText }}</div>
       </div>
-      <nut-progress 
-        :percentage="progressPercentage" 
-        :status="timerStore.currentState === 'exercise' ? 'active' : timerStore.currentState === 'rest' ? 'warning' : 'success'"
-        stroke-width="15"
-        class="progress-bar"
-      />
     </div>
     
     <!-- 控制按钮 -->
@@ -151,6 +183,36 @@ onUnmounted(() => {
         </div>
       </div>
     </div>
+    
+    <!-- 训练进度显示在最下方 -->
+    <div class="exercise-progress" v-if="timerStore.currentWorkout">
+      <div class="progress-title">训练进度</div>
+      <div class="exercise-list">
+        <div 
+          v-for="(exercise, exIndex) in timerStore.currentWorkout.exercises" 
+          :key="exercise.id"
+          class="exercise-row"
+        >
+          <div class="exercise-name" :class="{'current-exercise': exIndex === timerStore.currentExerciseIndex}">
+            {{ exIndex + 1 }}. {{ exercise.name }}
+          </div>
+          <div class="set-indicators">
+            <div 
+              v-for="setIndex in exercise.sets" 
+              :key="setIndex"
+              class="set-indicator"
+              :class="{
+                'completed': exIndex < timerStore.currentExerciseIndex || 
+                            (exIndex === timerStore.currentExerciseIndex && setIndex - 1 < timerStore.currentSetIndex),
+                'current': exIndex === timerStore.currentExerciseIndex && setIndex - 1 === timerStore.currentSetIndex,
+                'upcoming': exIndex > timerStore.currentExerciseIndex || 
+                           (exIndex === timerStore.currentExerciseIndex && setIndex - 1 > timerStore.currentSetIndex)
+              }"
+            ></div>
+          </div>
+        </div>
+      </div>
+    </div>
   </div>
 </template>
 
@@ -165,23 +227,23 @@ onUnmounted(() => {
   height: calc(100vh - 120px);
   display: flex;
   flex-direction: column;
+  overflow-y: auto;
 }
 
 .progress-circle-container {
-  margin: 30px auto;
+  margin: 20px auto;
   position: relative;
-  width: 240px;
-  height: 240px;
+  width: 220px;
+  height: 220px;
   display: flex;
   justify-content: center;
   align-items: center;
 }
 
 .progress-circle {
-  width: 220px;
-  height: 220px;
+  width: 200px;
+  height: 200px;
   border-radius: 50%;
-  border: 8px solid var(--nutui-brand-color);
   display: flex;
   flex-direction: column;
   justify-content: center;
@@ -189,30 +251,47 @@ onUnmounted(() => {
   background-color: white;
   box-shadow: 0 4px 20px rgba(0, 0, 0, 0.1);
   transition: border-color 0.3s ease;
+  aspect-ratio: 1 / 1;
+  position: relative;
+}
+
+.progress-svg {
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  transform: rotate(-90deg);
+}
+
+.progress-track {
+  stroke-linecap: round;
+}
+
+.progress-indicator {
+  stroke-linecap: round;
+  transition: stroke-dashoffset 0.3s ease;
 }
 
 .time-display {
-  font-size: 3.5rem;
+  font-size: 3.2rem;
   font-weight: bold;
   color: #333;
+  z-index: 1;
 }
 
 .status-text {
   font-size: 1.2rem;
   margin-top: 10px;
   font-weight: 500;
-}
-
-.progress-bar {
-  margin: 20px 0;
-  width: 100%;
+  z-index: 1;
 }
 
 .control-buttons {
   display: flex;
   justify-content: space-between;
   gap: 12px;
-  margin-top: 24px;
+  margin-top: 16px;
 }
 
 .control-button {
@@ -221,7 +300,7 @@ onUnmounted(() => {
 }
 
 .info-card {
-  margin-top: 30px;
+  margin-top: 16px;
   background-color: white;
   border-radius: 12px;
   padding: 16px;
@@ -257,16 +336,73 @@ onUnmounted(() => {
   margin-top: 4px;
 }
 
-/* 自定义进度条样式 */
-:deep(.nut-progress-outer) {
-  background-color: rgba(0, 0, 0, 0.05);
+/* 训练进度样式 */
+.exercise-progress {
+  margin-top: 10%;
+  margin-bottom: 0;
+  padding: 10px;
+  background-color: white;
+  border-radius: 8px;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.05);
 }
 
-:deep(.nut-progress-active .nut-progress-inner) {
-  background: var(--nutui-brand-color);
+.progress-title {
+  font-size: 14px;
+  font-weight: 500;
+  color: #666;
+  margin-bottom: 10px;
+  text-align: center;
 }
 
-:deep(.nut-progress-warning .nut-progress-inner) {
-  background: #ff9800;
+.exercise-list {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.exercise-row {
+  display: flex;
+  align-items: center;
+  padding: 4px 0;
+}
+
+.exercise-name {
+  flex: 1;
+  font-size: 14px;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  margin-right: 10px;
+  color: #666;
+}
+
+.current-exercise {
+  color: var(--nutui-brand-color);
+  font-weight: 500;
+}
+
+.set-indicators {
+  display: flex;
+  gap: 4px;
+}
+
+.set-indicator {
+  width: 20px;
+  height: 20px;
+  border-radius: 4px;
+  transition: all 0.3s ease;
+}
+
+.set-indicator.upcoming {
+  background-color: #e0e0e0;
+}
+
+.set-indicator.current {
+  background-color: var(--nutui-brand-color);
+  transform: scale(1.05);
+}
+
+.set-indicator.completed {
+  background-color: #4caf50;
 }
 </style> 
