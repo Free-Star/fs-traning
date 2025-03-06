@@ -3,7 +3,9 @@ import { ref, computed, provide, reactive } from 'vue';
 import { useWorkoutStore } from './stores/workout';
 import { useTimerStore } from './stores/timer';
 import { useSettingsStore } from './stores/settings';
-import { showDialog, showToast } from '@nutui/nutui';
+import { showToast } from '@nutui/nutui';
+import './style.css'
+import '@nutui/nutui/dist/style.css'
 
 // 导入组件
 import Timer from './components/Timer.vue';
@@ -25,6 +27,48 @@ const currentView = ref<View>('home');
 const editingWorkout = ref<string | null>(null);
 const showDeleteConfirm = ref(false);
 const workoutToDelete = ref<string | null>(null);
+const slideIndex = ref<number | null>(null);
+
+// 左滑相关的触摸处理
+let startX = 0;
+let startY = 0;
+const MIN_DISTANCE = 50;
+
+function handleTouchStart(e: TouchEvent, index: number) {
+  if (slideIndex.value !== null && slideIndex.value !== index) {
+    slideIndex.value = null;
+  }
+  
+  startX = e.touches[0].clientX;
+  startY = e.touches[0].clientY;
+}
+
+function handleTouchMove(e: TouchEvent, index: number) {
+  const currentX = e.touches[0].clientX;
+  const currentY = e.touches[0].clientY;
+  
+  // 计算X和Y方向的移动距离
+  const deltaX = startX - currentX;
+  const deltaY = startY - currentY;
+  
+  // 如果Y方向移动较大，认为是上下滑动，不做处理
+  if (Math.abs(deltaY) > Math.abs(deltaX)) {
+    return;
+  }
+  
+  // 阻止默认行为，防止页面滚动
+  e.preventDefault();
+  
+  if (deltaX > MIN_DISTANCE) {
+    slideIndex.value = index;
+  } else if (deltaX < -MIN_DISTANCE && slideIndex.value === index) {
+    slideIndex.value = null;
+  }
+}
+
+function resetSlideIndex() {
+  slideIndex.value = null;
+}
 
 // 主题配置
 const theme = reactive({
@@ -66,10 +110,6 @@ function addWorkout() {
   navigateTo('addWorkout');
 }
 
-function addCycle() {
-  navigateTo('addCycle');
-}
-
 function confirmDeleteWorkout(id: string) {
   workoutToDelete.value = id;
   showDeleteConfirm.value = true;
@@ -92,12 +132,6 @@ function cancelDelete() {
 // 计算属性
 const isHomePage = computed(() => currentView.value === 'home');
 const isNotHomePage = computed(() => currentView.value !== 'home');
-const isMobile = computed(() => {
-  return /Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(navigator.userAgent);
-});
-const isDarkMode = computed(() => {
-  return window.matchMedia && window.matchMedia('(prefers-color-scheme: dark)').matches;
-});
 
 // 标题文本
 const pageTitle = computed(() => {
@@ -113,109 +147,7 @@ const pageTitle = computed(() => {
   }
 });
 
-// 当前选中的标签
-const activeTab = computed(() => {
-  switch (currentView.value) {
-    case 'home': return 'home';
-    case 'stats': return 'stats';
-    case 'trends': return 'trends';
-    case 'settings': return 'settings';
-    case 'backup': return 'backup';
-    default: return '';
-  }
-});
 
-// 加载初始示例数据
-function loadExampleData() {
-  if (workoutStore.workoutPlans.length === 0) {
-    const pushPlan = workoutStore.addWorkoutPlan({
-      name: '推胸日训练计划',
-      type: '推',
-      exercises: [
-        {
-          id: '1',
-          name: '卧推',
-          sets: 4,
-          timePerSet: 40,
-          restBetweenSets: 60
-        },
-        {
-          id: '2',
-          name: '上斜哑铃卧推',
-          sets: 3,
-          timePerSet: 40,
-          restBetweenSets: 60
-        },
-        {
-          id: '3',
-          name: '蝴蝶机夹胸',
-          sets: 3,
-          timePerSet: 40,
-          restBetweenSets: 60
-        }
-      ]
-    });
-    
-    const pullPlan = workoutStore.addWorkoutPlan({
-      name: '拉背日训练计划',
-      type: '拉',
-      exercises: [
-        {
-          id: '4',
-          name: '引体向上',
-          sets: 4,
-          timePerSet: 30,
-          restBetweenSets: 60
-        },
-        {
-          id: '5',
-          name: '坐姿划船',
-          sets: 3,
-          timePerSet: 40,
-          restBetweenSets: 60
-        },
-        {
-          id: '6',
-          name: '器械下拉',
-          sets: 3,
-          timePerSet: 40,
-          restBetweenSets: 60
-        }
-      ]
-    });
-    
-    const legPlan = workoutStore.addWorkoutPlan({
-      name: '腿部训练计划',
-      type: '腿',
-      exercises: [
-        {
-          id: '7',
-          name: '深蹲',
-          sets: 4,
-          timePerSet: 40,
-          restBetweenSets: 90
-        },
-        {
-          id: '8',
-          name: '腿举',
-          sets: 3,
-          timePerSet: 40,
-          restBetweenSets: 90
-        },
-        {
-          id: '9',
-          name: '小腿提踵',
-          sets: 3,
-          timePerSet: 40,
-          restBetweenSets: 60
-        }
-      ]
-    });
-  }
-}
-
-// 初始化加载示例数据
-loadExampleData();
 </script>
 
 <template>
@@ -228,28 +160,40 @@ loadExampleData();
       <!-- 首页内容 -->
       <div v-if="isHomePage" class="home-content">
         <header class="app-header">
-          <h1 class="app-title">健身计时器</h1>
+          <h1 class="app-title">😡监管者</h1>
           <p class="app-subtitle">定制化训练计划，追踪训练进度</p>
         </header>
         
         <div class="section-card workout-list">
           <nut-cell-group title="我的训练计划">
             <template v-if="workoutStore.workoutPlans.length">
-              <nut-cell 
-                v-for="workout in workoutStore.workoutPlans" 
+              <div 
+                v-for="(workout, index) in workoutStore.workoutPlans" 
                 :key="workout.id"
-                :title="workout.name" 
-                :desc="workout.type + ' - ' + workout.exercises.length + '个动作'"
-                is-link 
+                class="swipe-cell-container"
+                @touchstart="handleTouchStart($event, index)"
+                @touchmove="handleTouchMove($event, index)"
               >
-                <template #link>
-                  <div class="workout-actions">
-                    <nut-button size="small" type="primary" @click.stop="startWorkout(workout.id)">开始</nut-button>
-                    <nut-button size="small" type="default" @click.stop="editWorkout(workout.id)">编辑</nut-button>
-                    <nut-button size="small" type="danger" @click.stop="confirmDeleteWorkout(workout.id)">删除</nut-button>
+                <div 
+                  class="swipe-cell"
+                  :class="{ 'active': slideIndex === index }"
+                >
+                  <nut-cell 
+                    :title="workout.name" 
+                    :desc="workout.type + ' - ' + workout.exercises.length + '个动作'"
+                    is-link 
+                    @click="startWorkout(workout.id)"
+                  ></nut-cell>
+                  <div class="swipe-actions">
+                    <nut-button shape="square" type="default" @click.stop="editWorkout(workout.id); resetSlideIndex()">
+                      <Icon icon="mdi:pencil"  />
+                    </nut-button>
+                    <nut-button shape="square" type="danger" @click.stop="confirmDeleteWorkout(workout.id); resetSlideIndex()">
+                      <Icon icon="mdi:delete"  />
+                    </nut-button>
                   </div>
-                </template>
-              </nut-cell>
+                </div>
+              </div>
             </template>
             <nut-empty v-else description="尚无训练计划，请添加" />
           </nut-cell-group>
@@ -264,7 +208,9 @@ loadExampleData();
               <template #desc>
                 <template v-if="workoutStore.getTodayWorkoutPlan">
                   <span>{{ workoutStore.getTodayWorkoutPlan.name }}</span>
-                  <nut-button size="small" type="primary" style="margin-left: 8px" @click.stop="startWorkout(workoutStore.getTodayWorkoutPlan.id)">开始</nut-button>
+                  <nut-button size="small" type="primary" style="margin-left: 8px" @click.stop="startWorkout(workoutStore.getTodayWorkoutPlan.id)">
+                    <Icon icon="mdi:play-circle" />
+                  </nut-button>
                 </template>
                 <span v-else>暂无</span>
               </template>
@@ -282,7 +228,7 @@ loadExampleData();
       <div v-else-if="currentView === 'addWorkout'" class="add-workout-view">
         <WorkoutPlanForm 
           :edit-mode="editingWorkout !== null"
-          :plan-id="editingWorkout"
+          :plan-id="editingWorkout || undefined"
           @saved="navigateTo('home')"
           @canceled="navigateTo('home')"
         />
@@ -313,24 +259,39 @@ loadExampleData();
 
     <!-- 浮动添加按钮 - 仅在首页显示 -->
     <nut-button v-if="isHomePage" type="primary" class="add-button" size="large" @click="addWorkout">
-      <span class="add-icon">+</span>
+      <Icon icon="mdi:plus" style="font-size: 32px; display: flex; align-items: center; justify-content: center;" />
     </nut-button>
 
     <!-- 底部标签栏 -->
     <nut-tabbar v-model="currentView" unactive-color="#7d7e80" active-color="var(--nutui-brand-color)" class="fixed-tabbar">
       <nut-tabbar-item name="home">
+        <template #icon>
+          <Icon icon="mdi:home" />
+        </template>
         主页
       </nut-tabbar-item>
       <nut-tabbar-item name="stats">
+        <template #icon>
+          <Icon icon="mdi:chart-line" />
+        </template>
         统计
       </nut-tabbar-item>
       <nut-tabbar-item name="trends">
+        <template #icon>
+          <Icon icon="mdi:chart-bar" />
+        </template>
         趋势
       </nut-tabbar-item>
       <nut-tabbar-item name="settings">
+        <template #icon>
+          <Icon icon="mdi:cog" />
+        </template>
         设置
       </nut-tabbar-item>
       <nut-tabbar-item name="backup">
+        <template #icon>
+          <Icon icon="mdi:download" />
+        </template>
         备份
       </nut-tabbar-item>
     </nut-tabbar>
@@ -454,5 +415,35 @@ loadExampleData();
 .timer-view, .add-workout-view, .add-cycle-view, .stats-view {
   max-width: 100%;
   margin: 0 auto;
+}
+
+.swipe-cell-container {
+  position: relative;
+  overflow: hidden;
+}
+
+.swipe-cell {
+  position: relative;
+  transition: transform 0.3s ease;
+  width: 100%;
+}
+
+.swipe-cell.active {
+  transform: translateX(-120px);
+}
+
+.swipe-actions {
+  position: absolute;
+  right: -120px;
+  top: 0;
+  height: 100%;
+  display: flex;
+  width: 120px;
+}
+
+.swipe-actions .nut-button {
+  height: 100%;
+  width: 60px;
+  border-radius: 0;
 }
 </style>

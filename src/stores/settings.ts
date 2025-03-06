@@ -17,7 +17,7 @@ export const useSettingsStore = defineStore('settings', () => {
   const isDarkMode = ref(false)     // 是否为暗黑模式
   
   // 播放声音
-  function playSound(type: 'exercise-start' | 'exercise-end' | 'rest-end') {
+  function playSound(type: 'bell' | 'pop' | 'alert' = 'bell') {
     if (!soundEnabled.value) return
     
     try {
@@ -33,7 +33,7 @@ export const useSettingsStore = defineStore('settings', () => {
       ];
       
       // 尝试所有可能的路径
-      let audioLoaded = false;
+      // let audioLoaded = false;
       
       // 创建一个新的Audio对象
       const audio = new Audio();
@@ -57,7 +57,7 @@ export const useSettingsStore = defineStore('settings', () => {
       // 当音频可以播放时
       audio.oncanplaythrough = () => {
         console.log('音频已加载，准备播放:', audio.src);
-        audioLoaded = true;
+        // audioLoaded = true;
         
         try {
           const playPromise = audio.play();

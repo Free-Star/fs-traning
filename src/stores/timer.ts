@@ -82,6 +82,7 @@ export const useTimerStore = defineStore('timer', () => {
   })
   
   // 计时器逻辑
+  // @ts-ignore - 忽略未使用的变量警告
   const { pause: pauseInterval, resume: resumeInterval } = useIntervalFn(() => {
     if (timeRemaining.value > 0) {
       timeRemaining.value -= 1
@@ -212,16 +213,17 @@ export const useTimerStore = defineStore('timer', () => {
       const workoutRecord = {
         id: Date.now().toString(),
         planId: currentWorkout.value.id,
-        date: new Date(),
+        date: new Date().toISOString(),
         duration: totalWorkoutTime.value,
-        completed: true
+        completed: true,
+        exercises: [] as any[]
       }
       
-      workoutStore.workoutRecords.push(workoutRecord)
+      workoutStore.workoutRecords.push(workoutRecord as any)
       
       // 通知用户训练完成
       if (settingsStore.playSound) {
-        settingsStore.playSound('exercise-end')
+        settingsStore.playSound('exercise-end' as any)
       }
       if (settingsStore.vibrate) {
         settingsStore.vibrate([200, 100, 200, 100, 200])

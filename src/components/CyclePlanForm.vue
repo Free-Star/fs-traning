@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { ref, reactive, computed } from 'vue'
+import { reactive} from 'vue'
 import { useWorkoutStore } from '../stores/workout'
 import type { CycleType } from '../stores/workout'
 import { showToast } from '@nutui/nutui'

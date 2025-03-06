@@ -1,5 +1,5 @@
 import { defineStore } from 'pinia'
-import { ref, reactive, computed, watch } from 'vue'
+import { ref, computed, watch } from 'vue'
 
 // 训练周期类型
 export type CycleType = 'three-split' | 'five-split' | 'custom'
@@ -43,15 +43,10 @@ export interface CyclePlan {
 export interface WorkoutRecord {
   id: string
   planId: string
-  date: Date
-  duration: number // 训练时长（秒）
-  completed: boolean
+  date: string
+  duration: number
+  exercises: any[]
 }
-
-// 使用LocalStorage存储和加载数据
-const STORAGE_KEY_PLANS = 'fitness-tracker-plans'
-const STORAGE_KEY_RECORDS = 'fitness-tracker-records'
-const STORAGE_KEY_CYCLES = 'fitness-tracker-cycles'
 
 export const useWorkoutStore = defineStore('workout', () => {
   // 状态
@@ -242,18 +237,18 @@ export const useWorkoutStore = defineStore('workout', () => {
   }
 
   // 记录训练
-  function recordWorkout(planId: string, exercises: WorkoutRecord['exercises']) {
-    const newRecord: WorkoutRecord = {
+  function recordWorkout(planId: string, exercises: any[]) {
+    const record: WorkoutRecord = {
       id: Date.now().toString(),
       planId,
-      date: new Date(),
-      completed: true, // 默认完成
+      date: new Date().toISOString(),
+      duration: 0,
       exercises
     }
     
-    workoutRecords.value.push(newRecord)
+    workoutRecords.value.push(record)
     saveToLocalStorage()
-    return newRecord
+    return record
   }
 
   // 导出数据

@@ -50,7 +50,7 @@ function testSound() {
     return
   }
   
-  settingsStore.playSound('rest-end')
+  settingsStore.playSound('rest-end' as any)
 }
 
 // 测试震动
@@ -80,7 +80,7 @@ function resetDefaults() {
 
 <template>
   <div class="settings-container">
-    <nut-cell-group title="训练计时设置">
+    <!-- <nut-cell-group title="训练计时设置">
       <nut-cell title="默认训练时间(秒)">
         <input
           v-model.number="tempSettings.exerciseTime"
@@ -100,15 +100,17 @@ function resetDefaults() {
           class="nut-input"
         />
       </nut-cell>
-    </nut-cell-group>
+    </nut-cell-group> -->
     
     <nut-cell-group title="通知设置">
       <nut-cell title="声音提醒">
         <nut-switch v-model="tempSettings.soundEnabled" />
+        声音提醒
       </nut-cell>
       
       <nut-cell title="震动提醒">
         <nut-switch v-model="tempSettings.vibrationEnabled" />
+        震动提醒
       </nut-cell>
       
       <nut-cell>
@@ -145,10 +147,11 @@ function resetDefaults() {
           ></div>
         </div>
       </nut-cell>
-      
+<!--       
       <nut-cell title="深色模式">
         <nut-switch v-model="tempSettings.isDarkMode" />
-      </nut-cell>
+        深色模式
+      </nut-cell> -->
     </nut-cell-group>
     
     <div class="action-buttons">

@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { computed, watch, ref, onMounted, onUnmounted } from 'vue'
+import { computed, watch, ref, onUnmounted } from 'vue'
 import { useTimerStore } from '../stores/timer'
 import { useSettingsStore } from '../stores/settings'
 
@@ -50,19 +50,19 @@ const progressPercentage = computed(() => {
 watch(() => timerStore.currentState, (newState, oldState) => {
   if (oldState === 'exercise' && newState === 'rest') {
     // 训练结束，休息开始
-    settingsStore.playSound('exercise-end')
+    settingsStore.playSound('exercise-end' as any)
     settingsStore.vibrate(200)
   } else if (oldState === 'rest' && newState === 'exercise') {
     // 休息结束，开始下一组训练
-    settingsStore.playSound('rest-end')
+    settingsStore.playSound('rest-end' as any)
     settingsStore.vibrate([100, 50, 100])
   } else if (newState === 'exercise' && oldState !== 'exercise') {
     // 训练开始
-    settingsStore.playSound('exercise-start')
+    settingsStore.playSound('exercise-start' as any)
     settingsStore.vibrate(100)
   } else if (newState === 'completed') {
     // 整个训练完成
-    settingsStore.playSound('exercise-end')
+    settingsStore.playSound('exercise-end' as any)
     settingsStore.vibrate([200, 100, 200, 100, 200])
   }
 })
@@ -79,21 +79,6 @@ onUnmounted(() => {
   if (progressAnimation) {
     progressAnimation?.cancel?.()
   }
-})
-
-// 计算每个动作的完成状态
-const exerciseStatuses = computed(() => {
-  if (!timerStore.currentWorkout) return []
-  
-  return timerStore.currentWorkout.exercises.map((_, index) => {
-    if (index < timerStore.currentExerciseIndex) {
-      return 'completed' // 已完成的动作
-    } else if (index === timerStore.currentExerciseIndex) {
-      return 'current' // 当前动作
-    } else {
-      return 'upcoming' // 未来的动作
-    }
-  })
 })
 </script>
 

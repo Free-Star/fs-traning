@@ -98,14 +98,6 @@ const totalTrainingDuration = computed(() => {
   }, 0) / 60)
 })
 
-// 平均每次训练时长（分钟）
-const averageTrainingDuration = computed(() => {
-  const totalRecords = workoutStore.workoutRecords.length
-  if (totalRecords === 0) return 0
-  
-  return Math.round(totalTrainingDuration.value / totalRecords)
-})
-
 // 格式化时间（将秒转为更易读的格式）
 function formatTime(seconds: number): string {
   const hours = Math.floor(seconds / 3600)

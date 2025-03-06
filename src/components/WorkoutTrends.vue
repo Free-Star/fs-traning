@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { computed, ref, onMounted } from 'vue'
+import { computed, ref } from 'vue'
 import { useWorkoutStore } from '../stores/workout'
 
 const workoutStore = useWorkoutStore()
@@ -114,11 +114,6 @@ function formatDuration(seconds: number): string {
 function getBarHeight(count: number): string {
   const percentage = (count / maxCount.value) * 100
   return `${Math.max(percentage, 5)}%` // 最小高度5%，防止完全看不见
-}
-
-// 切换视图类型
-function toggleViewType() {
-  viewType.value = viewType.value === 'week' ? 'month' : 'week'
 }
 
 // 获取平均每次训练时长

@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { ref, reactive, computed } from 'vue'
+import { reactive, computed } from 'vue'
 import { useWorkoutStore } from '../stores/workout'
 import type { WorkoutType, Exercise } from '../stores/workout'
 import { showToast } from '@nutui/nutui'
@@ -31,9 +31,9 @@ const formData = reactive({
 // 新动作表单
 const newExercise = reactive({
   name: '',
-  sets: 3,
-  timePerSet: 40,
-  restBetweenSets: 30
+  sets: null,
+  timePerSet: null,
+  restBetweenSets: null
 })
 
 // 编辑模式加载数据
@@ -47,7 +47,7 @@ if (props.editMode && props.planId) {
 }
 
 // 添加新动作
-function addExercise() {
+const addExercise = () => {
   if (!newExercise.name.trim()) {
     showToast.text('请输入动作名称')
     return
@@ -56,9 +56,9 @@ function addExercise() {
   formData.exercises.push({
     id: Date.now().toString(),
     name: newExercise.name,
-    sets: newExercise.sets,
-    timePerSet: newExercise.timePerSet,
-    restBetweenSets: newExercise.restBetweenSets
+    sets: newExercise.sets as any,
+    timePerSet: newExercise.timePerSet as any,
+    restBetweenSets: newExercise.restBetweenSets as any
   })
   
   // 重置表单
@@ -178,7 +178,7 @@ function cancel() {
               size="small"
               @click="removeExercise(index)"
             >
-              删除
+              <Icon icon="mdi:delete" />
             </nut-button>
           </template>
         </nut-cell>
@@ -191,7 +191,7 @@ function cancel() {
           v-model="newExercise.name" 
           type="text" 
           class="nut-input"
-          placeholder="例如：卧推"
+          placeholder="动作名称，例如：卧推"
         />
       </nut-cell>
       
@@ -201,6 +201,7 @@ function cancel() {
           type="number" 
           min="1"
           class="nut-input"
+          placeholder="请输入训练组数"
         />
       </nut-cell>
       
@@ -210,6 +211,7 @@ function cancel() {
           type="number" 
           min="1"
           class="nut-input"
+          placeholder="每组持续时间（秒）"
         />
       </nut-cell>
       
@@ -219,10 +221,10 @@ function cancel() {
           type="number" 
           min="0"
           class="nut-input"
+          placeholder="组间休息时间（秒）"
         />
       </nut-cell>
     </nut-cell-group>
-    
     <div class="action-buttons">
       <nut-button 
         type="primary"
@@ -230,7 +232,7 @@ function cancel() {
         @click="addExercise"
         class="mb-4"
       >
-        添加动作
+        <Icon icon="mdi:plus" /> 添加动作
       </nut-button>
     </div>
     
@@ -245,7 +247,7 @@ function cancel() {
         @click="savePlan"
         class="mb-2"
       >
-        保存计划
+        <Icon icon="mdi:check" /> 保存计划
       </nut-button>
       
       <nut-button 
