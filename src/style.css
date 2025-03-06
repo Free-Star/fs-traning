@@ -1,0 +1,107 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+/* NutUI主题变量覆盖 */
+:root {
+  --nutui-brand-color: #fa2c19;
+  --nutui-brand-color-start: #ff6334;
+  --nutui-brand-color-end: #fa2c19;
+  --nutui-brand-link-color: #396acc;
+  --nutui-gray-0: #fff;
+  --nutui-gray-1: #f5f6fa;
+  --nutui-gray-2: #ebedf0;
+  --nutui-gray-3: #dcdee0;
+  --nutui-gray-4: #c8c9cc;
+  --nutui-gray-5: #969799;
+  --nutui-gray-6: #323233;
+  --nutui-gray-7: #1d1d1d;
+  --nutui-gray-8: #000;
+}
+
+html {
+  font-family: 'Roboto', system-ui, -apple-system, BlinkMacSystemFont, Segoe UI, PingFang SC, Hiragino Sans GB, Microsoft YaHei, Helvetica Neue, Helvetica, Arial, sans-serif;
+  -webkit-tap-highlight-color: transparent;
+  scroll-behavior: smooth;
+}
+
+body {
+  margin: 0;
+  font-size: 14px;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+  background-color: var(--nutui-gray-1);
+  color: var(--nutui-gray-6);
+}
+
+/* 隐藏滚动条但允许滚动 */
+::-webkit-scrollbar {
+  width: 0px;
+  height: 0px;
+  background: transparent;
+}
+
+/* 暗黑模式适配 */
+.dark {
+  --nutui-brand-color: #fa2c19;
+  --nutui-brand-color-start: #ff6334;
+  --nutui-brand-color-end: #fa2c19;
+  --nutui-gray-0: #1d1d1d;
+  --nutui-gray-1: #323233;
+  --nutui-gray-2: #393939;
+  --nutui-gray-3: #4a4a4a;
+  --nutui-gray-4: #646566;
+  --nutui-gray-5: #979797;
+  --nutui-gray-6: #f2f3f5;
+  --nutui-gray-7: #f7f8fa;
+  --nutui-gray-8: #fff;
+}
+
+/* 自定义组件样式 */
+.section-card {
+  margin-bottom: 12px;
+  border-radius: 8px;
+  background-color: var(--nutui-gray-0);
+  overflow: hidden;
+}
+
+/* 修复NutUI在Tailwind下的一些样式问题 */
+.nut-cell-group__title {
+  margin: 10px 16px;
+  font-size: 14px;
+  font-weight: bold;
+  color: var(--nutui-gray-6);
+}
+
+.nut-button-primary {
+  background: linear-gradient(135deg, var(--nutui-brand-color-start), var(--nutui-brand-color-end));
+}
+
+.nut-tabbar {
+  box-shadow: 0 -2px 10px rgba(0, 0, 0, 0.05);
+}
+
+/* 自定义动画 */
+@keyframes fadeIn {
+  from {
+    opacity: 0;
+  }
+  to {
+    opacity: 1;
+  }
+}
+
+.fade-in {
+  animation: fadeIn 0.3s ease-in-out;
+}
+
+/* 移动设备全面屏底部安全区域 */
+@supports (padding-bottom: env(safe-area-inset-bottom)) {
+  .safe-area-bottom {
+    padding-bottom: env(safe-area-inset-bottom);
+  }
+  
+  .nut-tabbar {
+    padding-bottom: env(safe-area-inset-bottom);
+  }
+}
